@@ -1,10 +1,26 @@
-import yfinance as yf 
+# Data Processing Class for LSTM 
+"""
+This module contains the DataProcessor class, which is responsible for fetching, cleaning, and processing stock data for LSTM model training. 
+It is used for the following:
+- Fetching stock data 
+- Fetching crypto data from Binance
+- Cleaning the data into a usable dataframe
+- Converting to dataframe in clean format
+- Setting up the windowed configuration for the LSTM 
+- Computing Log-Normalized Returns (Potentially, haven't done this yet)
+"""
+
+import yfinance as yf
+from binance.client import Client as BC
 import pandas as pd
 import numpy as np 
+import os 
+import sys
 import matplotlib.pyplot as plt
 from typing import *
-import datetime
-import os 
+import datetime 
+import json
+import os
 
 class DataProcessor:
     def __init__(self, ticker, start_date: str, end_date: str):
@@ -13,7 +29,7 @@ class DataProcessor:
         self.end_date = end_date
         self.data = None
 
-    def fetch_data(self):
+    def fetch_stock_data(self):
         # Fetch the stock data
         stock_data = yf.download(self.ticker, start=self.start_date, end=self.end_date)
         
@@ -34,7 +50,30 @@ class DataProcessor:
         with open(self.csv_file, 'w') as file:
             file.writelines(lines)
 
-    
+    def initialize_binance_client(self):
+        with open('secrets/secrets.json', 'r') as file:
+            secrets = json.load(file)
+            self.binance_api_key = secrets['BINANCE_API_KEY']
+            self.binance_api_secret = secrets['BINANCE_API_SECRET']
+            self.binance_client = BC(self.binance_api_key, self.binance_api_secret)
+
+    def fetch_crypto_data(self):
+        self.initialize_binance_client() # Get the API keys and initialize the client
+
+        symbol = 'BTCUSDT'
+        interval = BC.KLINE_INTERVAL_1DAY
+
+        columns = ['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close Time', 
+                   'Quote Asset Volume', 'Number of Trades', 'Taker Buy Base Asset Volume', 'Taker Buy Quote Asset Volume', 'Ignore']
+        self.df = pd.DataFrame(self.binance_client.get_historical_klines(symbol, interval, self.start_date, self.end_date), columns=columns)
+        self.df['Open Time'] = pd.to_datetime(self.df['Open Time'], unit='ms')
+        self.df['Close'] = self.df['Close'].astype(float)
+        self.df['Open'] = self.df['Open'].astype(float)
+        self.df['High'] = self.df['High'].astype(float)
+        self.df['Low'] = self.df['Low'].astype(float)
+        self.df['Volume'] = self.df['Volume'].astype(float)
+        self.df = self.df[['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume']]
+
     def clean_data(self):
         # Load DataFrame Object from CSV
         self.df = pd.read_csv(self.csv_file)
@@ -118,7 +157,9 @@ class DataProcessor:
         return self.dates, self.X, self.Y
     
 
-    
+if __name__ == "__main__":
+    # Example Usage 
+    x = DataProcessor('AAPL', '2020-01-01', '2023-10-01')
+    x.fetch_crypto_data()
 
-
-        
+    print(x.df.head())
