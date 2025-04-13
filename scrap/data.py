@@ -1,3 +1,4 @@
+
 # Data Processing Class for LSTM 
 """
 This module contains the DataProcessor class, which is responsible for fetching, cleaning, and processing stock data for LSTM model training. 
@@ -60,7 +61,7 @@ class DataProcessor:
     def fetch_crypto_data(self):
         self.initialize_binance_client() # Get the API keys and initialize the client
 
-        symbol = 'BTCUSDT'
+        symbol = 'SOLUSDT'
         interval = BC.KLINE_INTERVAL_1DAY
 
         columns = ['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close Time', 
