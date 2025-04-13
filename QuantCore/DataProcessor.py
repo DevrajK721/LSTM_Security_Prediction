@@ -32,6 +32,7 @@ class DataProcessor:
             self.end_date = vals['Ending Date (YYYY-MM-DD)']
             self.base_currency = vals['Base Currency']
             self.tickers = vals['Tickers of Interest']
+            self.n = vals['Window Size']
 
         # Check whether all information has been loaded correctly 
         if not all([self.binance_api_key, self.binance_api_secret, self.start_date, self.end_date, self.base_currency, self.tickers]):
@@ -67,6 +68,7 @@ class DataProcessor:
 
         # Fetch all the crypto data requested 
         self.crypto_data = {}
+        self.crypto_live_data = {}
         # Find the path to the project root 
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         data_dir = os.path.join(project_root, 'data')
@@ -120,6 +122,32 @@ class DataProcessor:
         if not self.crypto_data:
             print("Warning: No crypto data was successfully processed.")
         
+
+        print(f"Fetching the last {self.n} data points for each ticker.")
+        for ticker in tqdm(self.tickers, desc="Fetching Live Data", unit="pair",
+                            ncols=80, bar_format="{desc}: {percentage:3.0f}%|{bar:30}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
+                            colour="blue", leave=True, dynamic_ncols=True):
+            try:
+                # Get the most recent self.n klines
+                recent_klines = self.binance_client.get_klines(
+                    symbol=ticker,
+                    interval=interval,
+                    limit=self.n
+                )
+                
+                # Convert to numpy array with just the 'Close' price (index 4 in kline data)
+                recent_closes = np.array([float(kline[4]) for kline in recent_klines])
+                
+                if len(recent_closes) == self.n:
+                    self.crypto_live_data[ticker] = recent_closes
+                else:
+                    print(f"Warning: Could only fetch {len(recent_closes)} points for {ticker} instead of {self.n}.")
+                    self.crypto_live_data[ticker] = recent_closes
+            except Exception as e:
+                print(f"Error fetching live data for {ticker}: {e}")
+                continue
+        
+        print("All live data fetched successfully.")
         print("Data processing completed successfully.")
             
 
@@ -129,27 +157,26 @@ class DataProcessor:
         return datetime.strptime(date_str, '%Y-%m-%d')
     
     # Compute windowed returns column 
-    def df_to_windowed_df(self, dataframe: pd.DataFrame, n: int = 30):
+    def df_to_windowed_df(self, dataframe: pd.DataFrame):
         first_date = self.str_to_datetime(self.start_date)
         last_date  = self.str_to_datetime(self.end_date)
 
-        self.n = n
         dataframe = dataframe.set_index('Open Time')
         sorted_dates = sorted(dataframe.index)
         if len(sorted_dates) <= n:
             print(f"Error: Not enough data points ({len(sorted_dates)}) for window size {n}")
             return None
 
-        target_date_index = n  # Start where we have n previous points
+        target_date_index = self.n  # Start where we have n previous points
         dates = []
         X, Y = [], []
 
         while target_date_index < len(sorted_dates):
             target_date = sorted_dates[target_date_index]
 
-            df_subset = dataframe.loc[:target_date].tail(n+1)
+            df_subset = dataframe.loc[:target_date].tail(self.n+1)
             if len(df_subset) != n+1:
-                print(f'Error: Window of size {n} is too large for date {target_date}')
+                print(f'Error: Window of size {self.n} is too large for date {target_date}')
                 target_date_index += 1
                 continue
 
@@ -166,8 +193,8 @@ class DataProcessor:
         ret_df = pd.DataFrame({})
         ret_df['Target Date'] = dates
         X = np.array(X)
-        for i in range(n):
-            ret_df[f'Lag-{n - i}'] = X[:, i]
+        for i in range(self.n):
+            ret_df[f'Lag-{self.n - i}'] = X[:, i]
         ret_df['Target'] = Y
 
         self.windowed_df = ret_df
@@ -177,8 +204,9 @@ class DataProcessor:
     
 if __name__ == "__main__":
     dp = DataProcessor() # One-Liner is all it takes to initialize the DataProcessor class)
-    # For example, let's print "BTCUSDT" head data 
-    print(dp.crypto_data['BTCUSDC'].head())
+    # For example, let's print "BTCUSDT" data
+    print(dp.crypto_data['BTCUSDC'].head()) # Print the first 5 rows of BTCUSDC data
+    print(dp.crypto_live_data['BTCUSDC']) # Print the live data for predictions
     
 
 
