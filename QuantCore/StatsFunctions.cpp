@@ -168,8 +168,8 @@ std::tuple<double, double, double> fit_garch11(const std::vector<double>& r) {
     double best_ll = -std::numeric_limits<double>::infinity();
     double best_omega = 1e-6, best_alpha = 0.1, best_beta = 0.85;
     for (double omega : {1e-6, 5e-6}) {
-        for (double alpha : {0.05, 0.1, 0.15}) {
-            for (double beta : {0.8, 0.85, 0.9}) {
+        for (double alpha : {0.05, 0.1, 0.15, 0.2, 0.25, 0.3}) {
+            for (double beta : {0.7, 0.75, 0.8, 0.85, 0.9, 0.95}) {
                 double sigma2 = omega / (1 - alpha - beta);
                 double ll = 0.0;
                 for (double e : r) {
@@ -217,7 +217,7 @@ py::dict grid_search_arima_garch(py::array_t<double> log_returns_np) {
     double best_ll = 0.0;
     
     // Force AR orders 1 and 2.
-    for (int p = 1; p <= 2; p++) {
+    for (int p = 1; p <= 4; p++) {
         std::vector<double> params;
         std::vector<double> residuals;
         double certainty = 0.0;

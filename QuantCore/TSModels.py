@@ -1,6 +1,8 @@
 import os
 import pandas as pd
+import numpy as np
 import QuantCoreStats as qcs  # Your PyBind11 module
+import DataProcessor as dp
 
 class ARIMAGARCHModel:
     def __init__(self):
@@ -8,6 +10,8 @@ class ARIMAGARCHModel:
         data_dir = os.path.join(project_root, 'data')
         self.data_folder = data_dir
         self.TS_Models = {}
+        self.data_processor = dp.DataProcessor()
+        self.recent_returns = self.data_processor.crypto_live_data['BTCUSDT']
 
     def run(self):
         for file in os.listdir(self.data_folder):
@@ -35,8 +39,7 @@ class ARIMAGARCHModel:
                     continue
 
                 try:
-                    recent_returns = returns[-30:]
-                    prediction = qcs.predict_next_return(model, recent_returns)
+                    prediction = qcs.predict_next_return(model, self.recent_returns)
                     certainty = model.get("certainty", None)
                 except Exception as e:
                     print(f"Failed to predict for {ticker}: {e}")
@@ -53,8 +56,7 @@ if __name__ == "__main__":
     for ticker, data in results.items():
         prediction = data["Prediction"]
         certainty = data["Certainty"]
-        if certainty > 0.5 and prediction > 0:
+        if certainty > 0.5 and np.exp(prediction) - 1 > 0:
             print(f"Ticker: {ticker}, Prediction: {prediction}, Certainty: {certainty}")
 
     
-     
