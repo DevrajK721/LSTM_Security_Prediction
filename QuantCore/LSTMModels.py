@@ -14,7 +14,7 @@ class LSTM_Models:
         # Run the data processor 
         self.data_processor = dp.DataProcessor()
     
-    def windowed_df_to_numpy(windowed_df):
+    def windowed_df_to_numpy(self, windowed_df):
         df_as_numpy = windowed_df.to_numpy()
         dates = df_as_numpy[:, 0]
 
@@ -24,4 +24,6 @@ class LSTM_Models:
         Y = df_as_numpy[:, -1]
 
         return dates, X.astype(np.float32), Y.astype(np.float32)
+
+    
 

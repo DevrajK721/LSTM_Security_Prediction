@@ -29,7 +29,7 @@ class DataProcessor:
             vals = json.load(file)
             self.binance_api_key = vals['BINANCE_API_KEY']
             self.binance_api_secret = vals['BINANCE_API_SECRET']
-            self.frequency = vals['Trading Frequency (Yearly/Monthly/Weekly/Daily)']
+            self.frequency = vals['Trading Frequency (Yearly/Monthly/Weekly/Daily/Hourly/Minutely)']
             self.start_date = vals['Starting Date (YYYY-MM-DD)']
             self.end_date = vals['Ending Date (YYYY-MM-DD)']
             self.base_currency = vals['Base Currency']
@@ -55,6 +55,10 @@ class DataProcessor:
 
         if self.frequency == 'Daily':
             interval = BC.KLINE_INTERVAL_1DAY
+        elif self.frequency == "Minutely":
+            interval = BC.KLINE_INTERVAL_1MINUTE
+        elif self.frequency == 'Hourly':
+            interval = BC.KLINE_INTERVAL_1HOUR
         elif self.frequency == 'Weekly':
             interval = BC.KLINE_INTERVAL_1WEEK
         elif self.frequency == 'Monthly':

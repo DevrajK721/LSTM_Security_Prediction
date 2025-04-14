@@ -57,6 +57,6 @@ if __name__ == "__main__":
         prediction = data["Prediction"]
         certainty = data["Certainty"]
         if certainty > 0.5 and np.exp(prediction) - 1 > 0:
-            print(f"Ticker: {ticker}, Prediction: {prediction}, Certainty: {certainty}")
+            print(f"Ticker: {ticker}, Prediction: {(np.exp(prediction) - 1) * 100}% Return, Certainty: {certainty}")
 
-    
+    print("All models have been run.")
