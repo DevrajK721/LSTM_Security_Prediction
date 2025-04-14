@@ -1,5 +1,10 @@
 # LSTM_Security_Prediction
-An LSTM for predicting a securities price using historical data. 
+**Note: This project is purely for interest and research purposes. I am not responsible for any losses that occur as a result of using this GitHub Repository, please use at your own risk.**
+
+Multi-Disciplinary Quantitative Trading Strategy invoking the usage of:
+- Classic Time Series Modeling (ARIMA-GARCH Joint Model) `C++` with `PyBind11` for efficiency
+- Long-Short-Term-Memory (LSTM) Model (Form of Recurrent Neural Network (RNN)) `tensorflow` with `metal` support as well as `cuda`
+- Analysis of correlations between assets to build low-risk portfolios. 
 
 ## Hidden Files
 To be able to fetch Cryptocurrency Historical Data, you are required to provide a Binance API Key and a Secret Key. These are available for free by simply switching your Binance account to a PRO account. 
